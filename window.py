@@ -2,7 +2,7 @@ import os
 import sys
 import config
 
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog, QMessageBox, QLabel, QComboBox, QCheckBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
@@ -13,10 +13,12 @@ class Launcher(QWidget):
         self.config = config.Config()
         self.path = self.config.read_config()['game_path']
 
+        self.unlockfps_status = self.config.read_config()['unlockfps']
+        # self.exec_cmd = f"prime-run wine {self.get_unlockfps_status()} {self.path}"
+
         self.initUI()
 
     def initUI(self):
-            
         pixmap = QPixmap('./background.jpg')
 
         # win pos & size
@@ -41,6 +43,11 @@ class Launcher(QWidget):
         chooser = QPushButton('选择原神安装路径', self)
         chooser.clicked.connect(self.showChooser)
         
+        # unlockfps
+        unlockfps_box = QCheckBox('Unlock FPS', self)
+        unlockfps_box.stateChanged.connect(self.unlockfps_option)
+        unlockfps_box.setGeometry(0, 50, 15, 15)
+        
 
         # launch game
         launch_game = QPushButton('Launch', self)
@@ -52,7 +59,6 @@ class Launcher(QWidget):
                                     border-radius: 2px;
                                     font-family: 'Courier New', Courier, monospace;
                                   """)
-        # btn pos
         launch_game.setGeometry(890, 600, 250, 80)
 
         # self.setLayout(box)
@@ -63,7 +69,10 @@ class Launcher(QWidget):
     def launch_gi(self):
             print(f'原神，启动！ {self.path}')
             if not self.path is None:
-                os.system(f'prime-run wine "{self.path}"')
+                exec_cmd = f"prime-run wine {self.get_unlockfps_status()} {self.path}"
+                # os.system(f'prime-run wine "{self.path}"')
+                print(exec_cmd)
+                os.system(exec_cmd)
             else:
                 self.showDialog("Error", "请先选择游戏可执行文件")
 
@@ -75,6 +84,21 @@ class Launcher(QWidget):
             self.path = fname[0]
             self.config.set_config('game_path', self.path)
 
+    def unlockfps_option(self, state):
+        if state == 2:
+            print("Unlockfps on")
+            self.unlockfps_status = True
+        else:
+            print("Unlockfps off")
+            self.unlockfps_status = False
+
+    def get_unlockfps_status(self):
+        print(self.unlockfps_status)
+        if self.unlockfps_status:
+            return "./unlockfps.exe"
+        else:
+            return ""
+
     def showDialog(self, title="Dialog", msg="Message"):
         msg_box = QMessageBox()
 
@@ -83,5 +107,3 @@ class Launcher(QWidget):
         msg_box.setIcon(QMessageBox.Information)
 
         msg_box.setStandardButtons(QMessageBox.Ok)
-
-
